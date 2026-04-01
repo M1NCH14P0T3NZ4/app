@@ -19,7 +19,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.27.0'
+          flutter-version: '3.24.5' # Versione compatibile con flet 0.82.2
           channel: 'stable'
 
       - name: Setup Python
@@ -29,16 +29,26 @@ jobs:
 
       - name: Installa dipendenze
         run: |
-          # Installiamo una versione più recente di flet per supportare il comando --icon
-          pip install flet>=0.83.1 httpx
+          pip install flet==0.82.2 httpx
 
       - name: Accetta licenze Android
         run: yes | flutter doctor --android-licenses
 
-      - name: Build APK con Icona Personalizzata
+      - name: Prepara Icone Android (Manuale per 0.82.2)
         run: |
-          # Ora il comando --icon verrà riconosciuto
-          yes | flet build apk --icon assets/icon.png
+          # Installiamo un tool per generare le icone Android
+          flutter pub global activate flutter_launcher_icons
+          
+          # Creiamo un file di configurazione temporaneo per le icone
+          echo "flutter_launcher_icons:
+            android: true
+            image_path: \"assets/icon.png\"" > flutter_launcher_icons.yaml
+
+      - name: Build APK
+        run: |
+          # Lanciamo il build normale (senza flag --icon che darebbe errore)
+          # Flet 0.82.2 creerà il progetto standard
+          yes | flet build apk
 
       - name: Carica l'APK finale
         uses: actions/upload-artifact@v4
