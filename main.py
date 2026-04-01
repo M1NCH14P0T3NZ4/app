@@ -8,19 +8,13 @@ from datetime import date
 # ============================================================
 #  CONFIGURAZIONE
 # ============================================================
-GITHUB_RAW_URL = (
-    "https://raw.githubusercontent.com/M1NCH14P0T3NZ4/"
-    "chiara_app_data/refs/heads/main/frasi.json"
-)
-DATA_INIZIO_STORIA = date(2023, 4, 20) 
+GITHUB_RAW_URL = "https://raw.githubusercontent.com/M1NCH14P0T3NZ4/chiara_app_data/refs/heads/main/frasi.json"
+DATA_INIZIO_STORIA = date(2025, 4, 20) 
 NOME_LEI = "Capretta"
 
-# Palette Blu - Colori più intensi per la leggibilità
-BLU_SCURO    = "#0D47A1"   # Un blu ancora più profondo
+BLU_SCURO    = "#0D47A1"
 BLU_MEDIO    = "#1976D2"
-BLU_CHIARO   = "#E3F2FD"
-BIANCO_CARTA = "#FAFCFF"
-GRIGIO_TESTO = "#263238"   # Quasi nero per massima leggibilità
+GRIGIO_TESTO = "#263238"
 
 def main(page: ft.Page):
     page.title = f"Per la mia {NOME_LEI} ❤️"
@@ -30,38 +24,21 @@ def main(page: ft.Page):
     page.padding = 0
     page.spacing = 0
 
-    page.fonts = {
-        "Dancing": "fonts/DancingScript-Regular.ttf",
-    }
-    page.theme = ft.Theme(font_family="sans-serif")
+    page.fonts = {"Dancing": "fonts/DancingScript-Regular.ttf"}
+    
+    # --- PLAYER AUDIO ---
+    # Creiamo un controllo audio globale
+    audio_player = ft.Audio(src="", autoplay=False)
+    page.overlay.append(audio_player)
 
     state = {"dati": None}
 
-    # --------------------------------------------------------
-    #  HELPER — Sfondo (Velo aumentato per leggibilità)
-    # --------------------------------------------------------
     def wrap_sfondo(content):
-        return ft.Stack(
-            [
-                ft.Image(
-                    src="sfondo.jpg",
-                    fit="cover",
-                    width=1000,
-                    height=2000,
-                ),
-                ft.Container(
-                    expand=True,
-                    # Portato a 0.55 per far risaltare meglio i testi
-                    bgcolor=ft.Colors.with_opacity(0.55, ft.Colors.WHITE),
-                ),
-                ft.Container(
-                    content=content,
-                    expand=True,
-                    padding=ft.Padding.symmetric(horizontal=18, vertical=0),
-                )
-            ],
-            expand=True
-        )
+        return ft.Stack([
+            ft.Image(src="sfondo.jpg", fit="cover", width=1000, height=2000),
+            ft.Container(expand=True, bgcolor=ft.Colors.with_opacity(0.55, ft.Colors.WHITE)),
+            ft.Container(content=content, expand=True, padding=ft.Padding.symmetric(horizontal=18, vertical=0))
+        ], expand=True)
 
     def load_data():
         try:
@@ -72,38 +49,47 @@ def main(page: ft.Page):
                     json.dump(dati, f, ensure_ascii=False)
                 return dati
         except:
-            pass
-        try:
-            with open("frasi_backup.json", "r", encoding="utf-8") as f:
-                return json.load(f)
-        except:
-            return None
+            try:
+                with open("frasi_backup.json", "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except: return None
 
     def giorni_insieme():
         return (date.today() - DATA_INIZIO_STORIA).days
 
     # ========================================================
-    #  SCHERMATA: SPLASH
+    #  SCHERMATA: SPLASH (Migliorata)
     # ========================================================
     def mostra_splash():
         page.clean()
-        cuore = ft.Stack([
-            ft.Icon(ft.Icons.FAVORITE, color=BLU_MEDIO, size=130),
-            ft.Container(
-                content=ft.Icon(ft.Icons.REMOVE_RED_EYE_ROUNDED, color=ft.Colors.WHITE, size=48),
-                alignment=ft.Alignment(0, -0.18),
-            ),
-        ])
-        page.add(
-            ft.Container(
-                content=ft.Column([
-                    cuore,
-                    ft.Text("ci sono sempre ❤️", size=34, font_family="Dancing", color=BLU_SCURO, text_align="center"),
-                ], alignment="center", horizontal_alignment="center", spacing=18),
-                expand=True, bgcolor=BIANCO_CARTA, alignment=ft.Alignment(0, 0),
-            )
+        # Effetto "Fade In" per il cuore
+        contenuto_splash = ft.Column([
+            ft.Stack([
+                ft.Icon(ft.Icons.FAVORITE, color=BLU_MEDIO, size=130),
+                ft.Container(
+                    content=ft.Icon(ft.Icons.REMOVE_RED_EYE_ROUNDED, color=ft.Colors.WHITE, size=48),
+                    alignment=ft.Alignment(0, -0.18),
+                ),
+            ]),
+            ft.Text("ci sono sempre ❤️", size=34, font_family="Dancing", color=BLU_SCURO, text_align="center"),
+        ], alignment="center", horizontal_alignment="center", spacing=18)
+
+        container_splash = ft.Container(
+            content=contenuto_splash,
+            expand=True,
+            bgcolor=ft.Colors.WHITE,
+            alignment=ft.Alignment(0, 0),
+            opacity=0, # Parte invisibile
+            animate_opacity=1000 # Animazione di 1 secondo
         )
+
+        page.add(container_splash)
         page.update()
+        
+        # Facciamo apparire il cuore dolcemente
+        container_splash.opacity = 1
+        page.update()
+        
         state["dati"] = load_data()
         time.sleep(2.5) 
         mostra_home()
@@ -126,10 +112,9 @@ def main(page: ft.Page):
             bgcolor=ft.Colors.with_opacity(0.95, ft.Colors.WHITE),
             border_radius=22,
             padding=ft.Padding.symmetric(vertical=16, horizontal=24),
-            shadow=ft.BoxShadow(blur_radius=20, color=ft.Colors.with_opacity(0.15, BLU_MEDIO)),
         )
 
-        grid = ft.GridView(expand=True, runs_count=2, max_extent=170, child_aspect_ratio=1.0, spacing=14, run_spacing=14)
+        grid = ft.GridView(expand=True, runs_count=2, max_extent=170, child_aspect_ratio=1.0, spacing=14)
 
         if state["dati"]:
             for cat in state["dati"].get("categorie", []):
@@ -143,22 +128,16 @@ def main(page: ft.Page):
                         bgcolor=ft.Colors.with_opacity(0.95, ft.Colors.WHITE),
                         border_radius=24,
                         on_click=lambda e, c=cat: mostra_dettaglio(c),
-                        shadow=ft.BoxShadow(blur_radius=10, color=ft.Colors.with_opacity(0.05, ft.Colors.BLACK))
                     )
                 )
 
         layout = ft.Column([
-            # Header migliorato con sfondo protettivo
             ft.Container(
                 content=ft.Column([
                     ft.Text(f"Ciao {NOME_LEI} ❤️", size=42, font_family="Dancing", color=BLU_SCURO, weight="bold"),
                     ft.Text("Come ti senti oggi?", size=18, color=GRIGIO_TESTO, weight="w600"),
                 ], spacing=2),
                 margin=ft.Margin.only(top=60, bottom=15),
-                padding=10,
-                # Leggera sfumatura dietro il titolo per leggerlo su ogni zona della foto
-                bgcolor=ft.Colors.with_opacity(0.1, ft.Colors.WHITE),
-                border_radius=15
             ),
             banner_giorni,
             ft.Container(height=15),
@@ -175,19 +154,23 @@ def main(page: ft.Page):
         page.clean()
         frammenti = categoria.get("frammenti", [])
         frase_obj = random.choice(frammenti) if frammenti else {"testo": "..."}
-        usa_dancing = categoria.get("id") in ["poesie", "noi"]
+        
+        # Controlliamo se esiste un audio per questa frase
+        audio_url = frase_obj.get("audio", "")
+
+        def play_audio(e):
+            if audio_url:
+                audio_player.src = audio_url
+                page.update()
+                audio_player.play()
 
         layout = ft.Column([
-            # Barra superiore più visibile
             ft.Container(
                 content=ft.Row([
                     ft.IconButton(icon=ft.Icons.ARROW_BACK_IOS_NEW_ROUNDED, icon_color=BLU_SCURO, on_click=lambda _: mostra_home()),
                     ft.Text(f"{categoria['emoji']}  {categoria['titolo']}", size=24, font_family="Dancing", color=BLU_SCURO, weight="bold"),
-                ], spacing=4),
+                ]),
                 margin=ft.Margin.only(top=48, bottom=10),
-                bgcolor=ft.Colors.with_opacity(0.8, ft.Colors.WHITE),
-                border_radius=20,
-                padding=5
             ),
 
             ft.Container(
@@ -195,21 +178,27 @@ def main(page: ft.Page):
                     ft.Icon(ft.Icons.FORMAT_QUOTE, color=BLU_MEDIO, size=45),
                     ft.Text(
                         frase_obj["testo"],
-                        size=28, # Un filo più grande
+                        size=28,
                         text_align="center",
-                        font_family="Dancing" if usa_dancing else "sans-serif",
+                        font_family="Dancing" if categoria["id"] in ["poesie", "noi"] else "sans-serif",
                         color=GRIGIO_TESTO,
-                        weight="w500"
                     ),
-                    ft.Icon(ft.Icons.FAVORITE, color=ft.Colors.PINK_100, size=25),
+                    # Tasto Audio: appare solo se audio_url non è vuoto
+                    ft.IconButton(
+                        icon=ft.Icons.MUSIC_NOTE_ROUNDED,
+                        icon_color=BLU_MEDIO,
+                        icon_size=30,
+                        visible=True if audio_url else False,
+                        on_click=play_audio,
+                        tooltip="Ascolta la mia voce"
+                    ) if audio_url else ft.Icon(ft.Icons.FAVORITE, color=ft.Colors.PINK_100, size=25),
                 ], alignment="center", horizontal_alignment="center", spacing=20),
                 padding=ft.Padding.all(35),
                 alignment=ft.Alignment(0, 0),
                 expand=True,
-                bgcolor=ft.Colors.with_opacity(0.96, ft.Colors.WHITE), # Quasi solido per leggere bene
+                bgcolor=ft.Colors.with_opacity(0.96, ft.Colors.WHITE),
                 border_radius=35,
                 margin=ft.Margin.symmetric(vertical=10),
-                shadow=ft.BoxShadow(blur_radius=30, color=ft.Colors.with_opacity(0.2, ft.Colors.BLACK))
             ),
 
             ft.Container(
@@ -217,12 +206,7 @@ def main(page: ft.Page):
                     "Un altro pensiero ✨",
                     icon=ft.Icons.AUTO_AWESOME_ROUNDED,
                     on_click=lambda _: mostra_dettaglio(categoria),
-                    style=ft.ButtonStyle(
-                        bgcolor=BLU_MEDIO,
-                        color=ft.Colors.WHITE,
-                        padding=ft.Padding.symmetric(vertical=15, horizontal=30),
-                        shape=ft.RoundedRectangleBorder(radius=30),
-                    ),
+                    style=ft.ButtonStyle(bgcolor=BLU_MEDIO, color=ft.Colors.WHITE, padding=15),
                 ),
                 padding=ft.Padding.only(bottom=35),
                 alignment=ft.Alignment(0, 0),
