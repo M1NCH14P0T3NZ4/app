@@ -19,7 +19,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.27.0' # Versione stabile per il build
+          flutter-version: '3.27.0'
           channel: 'stable'
 
       - name: Setup Python
@@ -29,14 +29,15 @@ jobs:
 
       - name: Installa dipendenze
         run: |
-          pip install flet==0.82.2 httpx
+          # Installiamo una versione più recente di flet per supportare il comando --icon
+          pip install flet>=0.83.1 httpx
 
       - name: Accetta licenze Android
         run: yes | flutter doctor --android-licenses
 
       - name: Build APK con Icona Personalizzata
         run: |
-          # Usiamo --icon per puntare al tuo logo in pixel art
+          # Ora il comando --icon verrà riconosciuto
           yes | flet build apk --icon assets/icon.png
 
       - name: Carica l'APK finale
