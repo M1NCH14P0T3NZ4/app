@@ -19,7 +19,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.5'
+          flutter-version: '3.27.0' # Versione più recente e stabile
           channel: 'stable'
 
       - name: Setup Python
@@ -29,11 +29,15 @@ jobs:
 
       - name: Installa dipendenze
         run: |
-          pip install flet httpx
+          pip install flet==0.82.2 httpx
+
+      - name: Accetta licenze Android
+        run: yes | flutter doctor --android-licenses
 
       - name: Build APK
         run: |
-          flet build apk
+          # Il comando 'yes' risponde automaticamente "y" a ogni domanda di Flet
+          yes | flet build apk
 
       - name: Carica l'APK finale
         uses: actions/upload-artifact@v4
