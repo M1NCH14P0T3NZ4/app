@@ -34,22 +34,9 @@ jobs:
       - name: Accetta licenze Android
         run: yes | flutter doctor --android-licenses
 
-      - name: Build APK (Sostituzione Icona e Nome)
+      - name: Build APK PortoSicuro
         run: |
-          # 1. Inizializziamo il build per PortoSicuro
-          flet build apk --no-docker --project PortoSicuro || true
-          
-          # 2. Sostituzione icone per evitare lo sfondo bianco (Legacy Icon fix)
-          sudo apt-get install imagemagick -y
-          
-          # Creiamo le icone in tutte le densità Android (Sostituiamo ic_launcher)
-          declare -A res=( ["mdpi"]="48x48" ["hdpi"]="72x72" ["xhdpi"]="96x96" ["xxhdpi"]="144x144" ["xxxhdpi"]="192x192" )
-          for i in "${!res[@]}"; do
-            mkdir -p build/flutter/android/app/src/main/res/mipmap-$i
-            convert assets/icon.png -resize ${res[$i]} build/flutter/android/app/src/main/res/mipmap-$i/ic_launcher.png
-          done
-          
-          # 3. Lanciamo il build definitivo con il nome PortoSicuro
+          # Costruiamo l'APK specificando il nome del progetto
           yes | flet build apk --project PortoSicuro
 
       - name: Carica l'APK finale
