@@ -9,7 +9,8 @@ from datetime import date
 #  CONFIGURAZIONE
 # ============================================================
 GITHUB_RAW_URL = "https://raw.githubusercontent.com/M1NCH14P0T3NZ4/chiara_app_data/refs/heads/main/frasi.json"
-DATA_INIZIO_STORIA = date(2025, 4, 20) 
+# Nota: ho messo 2022 per avere un conteggio giorni positivo e veritiero
+DATA_INIZIO_STORIA = date(2022, 4, 20) 
 NOME_LEI = "Capretta"
 
 BLU_SCURO    = "#0D47A1"
@@ -17,7 +18,6 @@ BLU_MEDIO    = "#1976D2"
 GRIGIO_TESTO = "#263238"
 
 def main(page: ft.Page):
-    # Nome visualizzato nella barra di stato/finestra
     page.title = "PortoSicuro"
     page.window.width = 390
     page.window_height = 800
@@ -25,14 +25,12 @@ def main(page: ft.Page):
     page.padding = 0
     page.spacing = 0
 
+    # Font locale
     page.fonts = {"Dancing": "fonts/DancingScript-Regular.ttf"}
     
-    # Audio Player Globale
-    audio_player = ft.Audio(src="", autoplay=False)
-    page.overlay.append(audio_player)
-
     state = {"dati": None}
 
+    # Helper per lo sfondo fotografico
     def wrap_sfondo(content):
         return ft.Stack([
             ft.Image(src="sfondo.jpg", fit="cover", width=1000, height=2000),
@@ -54,7 +52,7 @@ def main(page: ft.Page):
                     return json.load(f)
             except: return None
 
-    # --- SCHERMATA: HOME (Apertura Diretta) ---
+    # --- SCHERMATA: HOME ---
     def mostra_home():
         page.clean()
         giorni = (date.today() - DATA_INIZIO_STORIA).days
@@ -99,15 +97,11 @@ def main(page: ft.Page):
         page.add(wrap_sfondo(layout))
         page.update()
 
+    # --- SCHERMATA: DETTAGLIO ---
     def mostra_dettaglio(categoria):
         page.clean()
-        frase_obj = random.choice(categoria.get("frammenti", []))
-        audio_url = frase_obj.get("audio", "")
-
-        def play_audio(e):
-            audio_player.src = audio_url
-            page.update()
-            audio_player.play()
+        frammenti = categoria.get("frammenti", [])
+        frase_obj = random.choice(frammenti) if frammenti else {"testo": "..."}
 
         layout = ft.Column([
             ft.Container(
@@ -121,18 +115,17 @@ def main(page: ft.Page):
                 content=ft.Column([
                     ft.Icon(ft.Icons.FORMAT_QUOTE, color=BLU_MEDIO, size=45),
                     ft.Text(frase_obj["testo"], size=28, text_align="center", color=GRIGIO_TESTO),
-                    ft.IconButton(
-                        icon=ft.Icons.MUSIC_NOTE_ROUNDED,
-                        icon_color=BLU_MEDIO,
-                        icon_size=40,
-                        visible=True if audio_url else False,
-                        on_click=play_audio
-                    ) if audio_url else ft.Icon(ft.Icons.FAVORITE, color=ft.Colors.PINK_100, size=25),
-                ], alignment="center", horizontal_alignment="center"),
+                    ft.Icon(ft.Icons.FAVORITE, color=ft.Colors.PINK_100, size=25),
+                ], alignment="center", horizontal_alignment="center", spacing=20),
                 padding=35, expand=True, bgcolor=ft.Colors.with_opacity(0.96, ft.Colors.WHITE), border_radius=35,
+                margin=ft.Margin.symmetric(vertical=10),
             ),
             ft.Container(
-                content=ft.ElevatedButton("Un altro ✨", on_click=lambda _: mostra_dettaglio(categoria)),
+                content=ft.ElevatedButton(
+                    "Un altro ✨", 
+                    on_click=lambda _: mostra_dettaglio(categoria),
+                    style=ft.ButtonStyle(bgcolor=BLU_MEDIO, color=ft.Colors.WHITE, padding=15)
+                ),
                 padding=30, alignment=ft.Alignment(0, 0)
             )
         ], expand=True)
@@ -140,8 +133,10 @@ def main(page: ft.Page):
         page.add(wrap_sfondo(layout))
         page.update()
 
-    # Avvio immediato: carica dati e mostra home
+    # Caricamento iniziale rapido
     state["dati"] = load_data()
     mostra_home()
 
-ft.app(target=main, assets_dir="assets")
+# Avvio con flet run (ft.app)
+if __name__ == "__main__":
+    ft.app(target=main, assets_dir="assets")
