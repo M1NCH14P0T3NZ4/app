@@ -1,4 +1,4 @@
-name: Build APK per Chiara
+name: Build APK PortoSicuro
 on:
   push:
     branches: [ main ]
@@ -19,7 +19,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.5' # Versione compatibile con flet 0.82.2
+          flutter-version: '3.24.5'
           channel: 'stable'
 
       - name: Setup Python
@@ -34,24 +34,26 @@ jobs:
       - name: Accetta licenze Android
         run: yes | flutter doctor --android-licenses
 
-      - name: Prepara Icone Android (Manuale per 0.82.2)
+      - name: Build APK (Sostituzione Icona e Nome)
         run: |
-          # Installiamo un tool per generare le icone Android
-          flutter pub global activate flutter_launcher_icons
+          # 1. Inizializziamo il build per PortoSicuro
+          flet build apk --no-docker --project PortoSicuro || true
           
-          # Creiamo un file di configurazione temporaneo per le icone
-          echo "flutter_launcher_icons:
-            android: true
-            image_path: \"assets/icon.png\"" > flutter_launcher_icons.yaml
-
-      - name: Build APK
-        run: |
-          # Lanciamo il build normale (senza flag --icon che darebbe errore)
-          # Flet 0.82.2 creerà il progetto standard
-          yes | flet build apk
+          # 2. Sostituzione icone per evitare lo sfondo bianco (Legacy Icon fix)
+          sudo apt-get install imagemagick -y
+          
+          # Creiamo le icone in tutte le densità Android (Sostituiamo ic_launcher)
+          declare -A res=( ["mdpi"]="48x48" ["hdpi"]="72x72" ["xhdpi"]="96x96" ["xxhdpi"]="144x144" ["xxxhdpi"]="192x192" )
+          for i in "${!res[@]}"; do
+            mkdir -p build/flutter/android/app/src/main/res/mipmap-$i
+            convert assets/icon.png -resize ${res[$i]} build/flutter/android/app/src/main/res/mipmap-$i/ic_launcher.png
+          done
+          
+          # 3. Lanciamo il build definitivo con il nome PortoSicuro
+          yes | flet build apk --project PortoSicuro
 
       - name: Carica l'APK finale
         uses: actions/upload-artifact@v4
         with:
-          name: App_Per_Chiara
+          name: PortoSicuro_APK
           path: build/apk/*.apk
